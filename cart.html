@@ -259,16 +259,198 @@ window.placeOrder=async(method)=>{
         stock:newStock
       });
     }
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ================= FIREBASE ================= */
+const app = initializeApp({
+  apiKey:"AIzaSyBcvViENWxHC1b9j5V2xOFGMaL-2TYfdiw",
+  authDomain:"al-kaif-61446.firebaseapp.com",
+  projectId:"al-kaif-61446"
+});
+const db = getFirestore(app);
+
+/* ================= USER ================= */
+const user = localStorage.getItem("user");
+
+/* ================= CART ================= */
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+const cartList = document.getElementById("cartList");
+const totalEl = document.getElementById("total");
+
+/* ================= RENDER ================= */
+function render(){
+
+  cartList.innerHTML="";
+  let total=0;
+
+  if(cart.length===0){
+    cartList.innerHTML="<p style='opacity:0.6'>Cart is empty 🛒</p>";
+  }
+
+  cart.forEach(p=>{
+
+    total += p.price * p.qty;
+
+    cartList.innerHTML+=`
+    <div class="item">
+
+      <img src="${p.image}">
+
+      <div class="info">
+        <div>${p.name}</div>
+        <div>₹${p.price}</div>
+
+        <div class="qty">
+          <button onclick="changeQty('${p.id}',-1)">-</button>
+          <span>${p.qty}</span>
+          <button onclick="changeQty('${p.id}',1)">+</button>
+        </div>
+
+      </div>
+
+    </div>
+    `;
   });
+
+  totalEl.innerText = "Total: ₹"+total;
+}
+
+/* ================= QTY ================= */
+window.changeQty=(id,val)=>{
+
+  let item = cart.find(x=>x.id==id);
+  if(!item) return;
+
+  item.qty += val;
+
+  if(item.qty<=0){
+    cart = cart.filter(x=>x.id!=id);
+  }
+
+  localStorage.setItem("cart",JSON.stringify(cart));
+
+  render();
+};
+
+/* ================= ADDRESS ================= */
+window.openAddress=()=>{
+
+  if(cart.length===0){
+    alert("Cart empty ❌");
+    return;
+  }
+
+  document.getElementById("addressPopup").style.display="flex";
+};
+
+window.nextStep=()=>{
+
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let address=document.getElementById("address").value;
+
+  if(!name || !phone || !address){
+    alert("Fill all details ❌");
+    return;
+  }
+
+  document.getElementById("addressPopup").style.display="none";
+  document.getElementById("paymentPopup").style.display="flex";
+};
+
+/* ================= SAVE ORDER ================= */
+async function saveOrder(method, paymentId="COD"){
+
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let address=document.getElementById("address").value;
+
+  let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+  /* SAVE ORDER IN FIREBASE */
+  await addDoc(collection(db,"orders"),{
+    user: user || "guest",
+    name,
+    phone,
+    address,
+    items: cart,
+    total,
+    paymentMethod: method,
+    paymentId: paymentId,
+    status:"Placed",
+    time: new Date()
+  });
+
+  /* STOCK REDUCE */
+  const snap = await getDocs(collection(db,"products"));
+
+  for(const d of snap.docs){
+
+    let data = d.data();
+    let item = cart.find(x=>x.id==d.id);
+
+    if(item){
+
+      let newStock = (data.stock || 0) - item.qty;
+
+      await updateDoc(doc(db,"products",d.id),{
+        stock: newStock < 0 ? 0 : newStock
+      });
+
+    }
+  }
 
   /* CLEAR CART */
   localStorage.removeItem("cart");
 
-  /* SUCCESS */
+  /* SUCCESS PAGE */
   location.href="success.html";
+}
+
+/* ================= COD ================= */
+window.placeOrder=(method)=>{
+
+  if(method==="COD"){
+    saveOrder("COD");
+  }else{
+    startRazorpay();
+  }
 };
 
-/* START */
+/* ================= RAZORPAY ================= */
+function startRazorpay(){
+
+  let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+  let options = {
+    key: "rzp_live_SUAHUYpa5U0E9T",
+    amount: total * 100,
+    currency: "INR",
+    name: "ALKAIF",
+    description: "Order Payment",
+
+    handler: function (response){
+      saveOrder("ONLINE", response.razorpay_payment_id);
+    },
+
+    prefill: {
+      email: user || "test@gmail.com"
+    },
+
+    theme: {
+      color: "#ffffff"
+    }
+  };
+
+  let rzp = new Razorpay(options);
+  rzp.open();
+}
+
+/* ================= START ================= */
 render();
 
 </script>
