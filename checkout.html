@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout - ALKAIF</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+<style>
+body{font-family:Inter;padding:20px}
+
+h2{margin-bottom:10px}
+
+input{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border:1px solid #ddd;
+  border-radius:8px;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  background:#000;
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  margin-top:15px;
+}
+</style>
+</head>
+<body>
+
+<h2>Checkout</h2>
+
+<input id="name" placeholder="Full Name">
+<input id="phone" placeholder="Phone Number">
+<input id="address" placeholder="Address">
+
+<button onclick="placeOrder()">Pay & Place Order</button>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, addDoc, collection } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+/* FIREBASE */
+const app = initializeApp({
+  apiKey:"YOUR_KEY",
+  authDomain:"alkaif.firebaseapp.com",
+  projectId:"alkaif"
+});
+
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+/* PLACE ORDER */
+window.placeOrder = async ()=>{
+
+  const user = auth.currentUser;
+
+  if(!user){
+    location.href="login.html";
+    return;
+  }
+
+  const product = localStorage.getItem("product");
+  const price = localStorage.getItem("amount");
+
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const address = document.getElementById("address").value;
+
+  if(!name || !phone || !address){
+    alert("Fill all details");
+    return;
+  }
+
+  /* SAVE ORDER */
+  await addDoc(collection(db,"orders"),{
+    user:user.email,
+    product,
+    price,
+    name,
+    phone,
+    address,
+    status:"Processing",
+    time:Date.now()
+  });
+
+  /* UPI PAYMENT */
+  window.location.href =
+  "upi://pay?pa=9004821226@fam&pn=ALKAIF&am="+price+"&cu=INR";
+
+  /* SUCCESS */
+  setTimeout(()=>{
+    location.href="success.html";
+  },3000);
+};
+
+</script>
+
+</body>
+</html>

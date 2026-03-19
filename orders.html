@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders – ALKAIF</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+
+/* BODY */
+body{
+  margin:0;
+  font-family:Inter;
+  color:#fff;
+  background:linear-gradient(120deg,#000,#111,#1a1a1a,#000);
+  background-size:400% 400%;
+  animation:bgMove 12s ease infinite;
+}
+
+@keyframes bgMove{
+  0%{background-position:0%}
+  50%{background-position:100%}
+  100%{background-position:0%}
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  padding:16px;
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(10px);
+}
+
+.header a{
+  color:white;
+  text-decoration:none;
+  font-size:14px;
+}
+
+/* TITLE */
+.title{
+  text-align:center;
+  padding:25px 15px;
+}
+
+.title h2{
+  font-family:'Playfair Display';
+  margin:0;
+}
+
+/* ORDERS CONTAINER */
+#orders{
+  padding:10px 12px 80px;
+}
+
+/* CARD */
+.order{
+  margin:14px 0;
+  padding:18px;
+  border-radius:18px;
+  background:linear-gradient(145deg,#111,#1a1a1a);
+  box-shadow:
+    0 8px 25px rgba(0,0,0,0.6),
+    inset 0 0 0.5px rgba(255,255,255,0.05);
+  animation:fadeUp 0.5s ease;
+}
+
+/* TOP */
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* DATE */
+.date{
+  font-size:12px;
+  opacity:0.6;
+}
+
+/* STATUS */
+.status{
+  padding:5px 12px;
+  border-radius:20px;
+  font-size:11px;
+}
+
+.processing{background:#ffb300;color:#000;}
+.shipped{background:#2196f3;}
+.delivered{background:#00c853;}
+
+/* LINE */
+.line{
+  height:1px;
+  background:#222;
+  margin:12px 0;
+}
+
+/* ITEMS */
+.items{
+  font-size:14px;
+  line-height:1.6;
+}
+
+/* TOTAL */
+.total{
+  font-weight:bold;
+  margin-top:10px;
+}
+
+/* EMPTY */
+.empty{
+  text-align:center;
+  margin-top:80px;
+  opacity:0.5;
+}
+
+/* ANIMATION */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <a href="index.html">← Home</a>
+  <a href="cart.html">Cart</a>
+</div>
+
+<div class="title">
+  <h2>Your Orders</h2>
+</div>
+
+<div id="orders"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* FIREBASE */
+const app = initializeApp({
+  apiKey: "AIzaSyBcvViENWxHC1b9j5V2xOFGMaL-2TYfdiw",
+  authDomain: "al-kaif-61446.firebaseapp.com",
+  projectId: "al-kaif-61446"
+});
+
+const db = getFirestore(app);
+
+const container = document.getElementById("orders");
+
+/* LOGIN CHECK */
+const user = localStorage.getItem("user");
+
+if(!user){
+  container.innerHTML="<div class='empty'>Login to view your orders</div>";
+}else{
+  loadOrders();
+}
+
+/* LOAD ORDERS */
+async function loadOrders(){
+
+  try{
+
+    const snap = await getDocs(collection(db,"orders"));
+
+    let found = false;
+
+    snap.forEach(doc=>{
+
+      const o = doc.data();
+
+      /* USER FILTER */
+      if(o.user === user){
+
+        found = true;
+
+        let status = (o.status || "Processing").toLowerCase();
+
+        let total = 0;
+
+        o.items.forEach(i=>{
+          total += (i.price || 1999) * i.qty;
+        });
+
+        container.innerHTML += `
+          <div class="order">
+
+            <div class="top">
+              <div class="date">${o.date}</div>
+              <div class="status ${status}">
+                ${o.status || "Processing"}
+              </div>
+            </div>
+
+            <div class="line"></div>
+
+            <div class="items">
+              ${o.items.map(i=>i.id+" × "+i.qty).join("<br>")}
+            </div>
+
+            <div class="line"></div>
+
+            <div class="total">
+              Total: ₹${total}
+            </div>
+
+          </div>
+        `;
+      }
+
+    });
+
+    if(!found){
+      container.innerHTML="<div class='empty'>No orders yet</div>";
+    }
+
+  }catch(e){
+    container.innerHTML="<div class='empty'>Error loading orders</div>";
+    console.log(e);
+  }
+
+}
+
+</script>
+
+</body>
+</html>
