@@ -5,7 +5,6 @@
 <title>ALKAIF Cart</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <style>
@@ -17,7 +16,7 @@ body{
   color:#fff;
 }
 
-/* BG */
+/* ===== BG GLOW ===== */
 .bg{
   position:fixed;
   width:200%;
@@ -25,28 +24,53 @@ body{
   background:
     radial-gradient(circle at 30% 70%, #00ff8840, transparent 60%),
     radial-gradient(circle at 70% 30%, #00ffaa30, transparent 60%);
-  filter:blur(100px);
-  animation:move 10s infinite alternate;
+  filter:blur(120px);
+  animation:move 12s infinite alternate;
   z-index:-1;
 }
-
-/* HEADER */
-.header{
-  padding:20px;
-  font-size:26px;
-  font-family:'Playfair Display';
+@keyframes move{
+  0%{transform:translate(0,0)}
+  100%{transform:translate(-120px,80px)}
 }
 
-/* CART */
+/* ===== HEADER ===== */
+.header{
+  padding:20px;
+  font-family:'Playfair Display';
+  font-size:26px;
+}
+
+/* ===== CART ITEM ===== */
 .cart-list{padding:20px}
+
+.item-wrap{
+  position:relative;
+  overflow:hidden;
+  margin-bottom:15px;
+}
+
+.delete-bg{
+  position:absolute;
+  right:0;
+  top:0;
+  bottom:0;
+  width:80px;
+  background:red;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  border-radius:15px;
+}
 
 .item{
   display:flex;
   gap:15px;
-  background:#111;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(15px);
   border-radius:15px;
   padding:12px;
-  margin-bottom:15px;
+  transition:0.3s;
 }
 
 .item img{
@@ -63,38 +87,44 @@ body{
 }
 
 .qty button{
-  background:#fff;
   border:none;
+  background:#fff;
   padding:6px 12px;
   border-radius:8px;
+  font-weight:bold;
 }
 
-/* TOTAL */
+/* ===== TOTAL ===== */
 .total{
   padding:20px;
   font-size:20px;
+  font-weight:600;
 }
 
-/* BTN */
+/* ===== BUTTON ===== */
 .checkout{
   margin:20px;
   padding:15px;
   width:calc(100% - 40px);
   border:none;
   border-radius:12px;
-  background:#fff;
+  background:linear-gradient(135deg,#fff,#ddd);
   color:#000;
   font-weight:600;
+  transition:0.3s;
+}
+.checkout:hover{
+  transform:scale(1.05);
 }
 
-/* POPUP */
+/* ===== POPUP ===== */
 .popup{
   position:fixed;
   inset:0;
   background:#000000cc;
   display:none;
-  align-items:center;
   justify-content:center;
+  align-items:center;
 }
 
 .box{
@@ -159,11 +189,14 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 
+/* USER */
+let user = JSON.parse(localStorage.getItem("user")) || {id:"guest_"+Date.now()};
+
 /* CART */
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-const cartList = document.getElementById("cartList");
-const totalEl = document.getElementById("total");
+const cartList=document.getElementById("cartList");
+const totalEl=document.getElementById("total");
 
 /* RENDER */
 function render(){
@@ -173,26 +206,25 @@ function render(){
   cartList.innerHTML="";
   let total=0;
 
-  if(cart.length===0){
-    cartList.innerHTML="<p style='opacity:0.6'>Cart empty 🛒</p>";
-    totalEl.innerText="Total: ₹0";
-    return;
-  }
+  cart.forEach((p,index)=>{
 
-  cart.forEach(p=>{
-    total += p.price * p.qty;
+    total += p.price*p.qty;
 
     cartList.innerHTML+=`
-    <div class="item">
-      <img src="${p.image}">
-      <div>
-        <div>${p.name}</div>
-        <div>₹${p.price}</div>
+    <div class="item-wrap">
+      <div class="delete-bg">Delete</div>
 
-        <div class="qty">
-          <button onclick="changeQty('${p.id}',-1)">-</button>
-          <span>${p.qty}</span>
-          <button onclick="changeQty('${p.id}',1)">+</button>
+      <div class="item" id="item${index}">
+        <img src="${p.image}">
+        <div>
+          <div>${p.name}</div>
+          <div>₹${p.price}</div>
+
+          <div class="qty">
+            <button onclick="changeQty('${p.id}',-1)">-</button>
+            <span>${p.qty}</span>
+            <button onclick="changeQty('${p.id}',1)">+</button>
+          </div>
         </div>
       </div>
     </div>
@@ -200,6 +232,44 @@ function render(){
   });
 
   totalEl.innerText="Total: ₹"+total;
+
+  enableSwipe();
+}
+
+/* SWIPE DELETE */
+function enableSwipe(){
+
+  document.querySelectorAll(".item").forEach((el,index)=>{
+
+    let startX=0;
+
+    el.addEventListener("touchstart",(e)=>{
+      startX=e.touches[0].clientX;
+    });
+
+    el.addEventListener("touchmove",(e)=>{
+      let move=e.touches[0].clientX;
+      let diff=startX-move;
+
+      if(diff>0){
+        el.style.transform=`translateX(-${diff}px)`;
+      }
+    });
+
+    el.addEventListener("touchend",(e)=>{
+      let moved=parseInt(el.style.transform.replace(/[^\d]/g,'')) || 0;
+
+      if(moved>80){
+        cart.splice(index,1);
+        localStorage.setItem("cart",JSON.stringify(cart));
+        render();
+      }else{
+        el.style.transform="translateX(0)";
+      }
+    });
+
+  });
+
 }
 
 /* QTY */
@@ -232,7 +302,7 @@ window.nextStep=()=>{
 };
 
 /* ORDER */
-window.placeOrder=async(method)=>{
+async function saveOrder(method,paymentId="COD"){
 
   let name=document.getElementById("name").value;
   let phone=document.getElementById("phone").value;
@@ -241,15 +311,16 @@ window.placeOrder=async(method)=>{
   let total=cart.reduce((s,i)=>s+i.price*i.qty,0);
 
   await addDoc(collection(db,"orders"),{
+    user,
     name,phone,address,
     items:cart,
     total,
     method,
+    paymentId,
     status:"Placed",
     time:new Date()
   });
 
-  /* STOCK */
   const snap=await getDocs(collection(db,"products"));
 
   snap.forEach(async d=>{
@@ -265,6 +336,28 @@ window.placeOrder=async(method)=>{
 
   localStorage.removeItem("cart");
   location.href="success.html";
+}
+
+/* PAYMENT */
+window.placeOrder=(method)=>{
+  if(method==="COD"){
+    saveOrder("COD");
+  }else{
+
+    let total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+    let rzp=new Razorpay({
+      key:"rzp_live_SUAHUYpa5U0E9T",
+      amount:total*100,
+      currency:"INR",
+      name:"ALKAIF",
+      handler:function(res){
+        saveOrder("ONLINE",res.razorpay_payment_id);
+      }
+    });
+
+    rzp.open();
+  }
 };
 
 /* START */
