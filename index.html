@@ -77,66 +77,84 @@ body{
 
 <div class="grid" id="grid"></div>
 
-<script>
+<script type="module">
 
-/* PRODUCTS */
-let products=[
-{id:"1",name:"Puzzle Jubba",price:1999,image:"https://picsum.photos/id/1011/400/500",stock:10},
-{id:"2",name:"Cream Jubba",price:1999,image:"https://picsum.photos/id/1005/400/500",stock:5},
-{id:"3",name:"Golden Jubba",price:1999,image:"https://picsum.photos/id/1001/400/500",stock:0},
-{id:"4",name:"Royal Jubba",price:1999,image:"https://picsum.photos/id/1012/400/500",stock:7},
-{id:"5",name:"Grey Jubba",price:1999,image:"https://picsum.photos/id/1013/400/500",stock:6},
-{id:"6",name:"Black Jubba",price:1999,image:"https://picsum.photos/id/1015/400/500",stock:4}
-];
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  getDocs 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* CART */
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+/* ================= FIREBASE ================= */
+const app = initializeApp({
+  apiKey:"AIzaSyBcvViENWxHC1b9j5V2xOFGMaL-2TYfdiw",
+  authDomain:"al-kaif-61446.firebaseapp.com",
+  projectId:"al-kaif-61446"
+});
+const db = getFirestore(app);
 
-const grid = document.getElementById("grid");
-const cartBtn = document.getElementById("cartBtn");
+/* ================= USER ================= */
+let user = JSON.parse(localStorage.getItem("user"));
 
-/* UPDATE CART COUNT */
-function updateCart(){
-  let count = cart.reduce((s,i)=>s+i.qty,0);
-  cartBtn.innerText = "Cart ("+count+")";
+/* guest auto create */
+if(!user){
+  user = {
+    id: "guest_" + Date.now(),
+    name: "Guest User"
+  };
+  localStorage.setItem("user", JSON.stringify(user));
 }
 
-/* ADD TO CART (MAIN FIX) */
-function addToCart(id){
+/* ================= CART ================= */
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-  let p = products.find(x=>x.id==id);
-  if(!p) return;
+const cartList = document.getElementById("cartList");
+const totalEl = document.getElementById("total");
 
-  if(p.stock<=0){
-    alert("Out of stock ❌");
+/* ================= RENDER ================= */
+function render(){
+
+  cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  cartList.innerHTML="";
+  let total=0;
+
+  if(cart.length===0){
+    cartList.innerHTML="<p style='opacity:0.6'>Cart empty 🛒</p>";
+    totalEl.innerText="Total: ₹0";
     return;
   }
 
-  let existing = cart.find(x=>x.id==id);
+  cart.forEach(p=>{
 
-  if(existing){
-    existing.qty += 1;
-  }else{
-    cart.push({
-      id:p.id,
-      name:p.name,
-      price:p.price,
-      image:p.image,
-      qty:1
-    });
-  }
+    total += p.price * p.qty;
 
-  /* SAVE */
-  localStorage.setItem("cart", JSON.stringify(cart));
+    cartList.innerHTML+=`
+    <div class="item">
+      <img src="${p.image}">
+      <div class="info">
+        <div>${p.name}</div>
+        <div>₹${p.price}</div>
 
-  console.log("Cart saved:", cart); // DEBUG
+        <div class="qty">
+          <button onclick="changeQty('${p.id}',-1)">-</button>
+          <span>${p.qty}</span>
+          <button onclick="changeQty('${p.id}',1)">+</button>
+        </div>
+      </div>
+    </div>
+    `;
+  });
 
-  updateCart();
-  render();
+  totalEl.innerText = "Total: ₹"+total;
 }
 
-/* CHANGE QTY */
-function changeQty(id,val){
+/* ================= QTY ================= */
+window.changeQty = (id,val)=>{
 
   let item = cart.find(x=>x.id==id);
   if(!item) return;
@@ -147,55 +165,117 @@ function changeQty(id,val){
     cart = cart.filter(x=>x.id!=id);
   }
 
-  localStorage.setItem("cart", JSON.stringify(cart));
-
-  updateCart();
+  localStorage.setItem("cart",JSON.stringify(cart));
   render();
-}
+};
 
-/* RENDER */
-function render(){
+/* ================= ADDRESS ================= */
+window.openAddress=()=>{
 
-  grid.innerHTML="";
+  if(cart.length===0){
+    alert("Cart empty ❌");
+    return;
+  }
 
-  products.forEach(p=>{
+  document.getElementById("addressPopup").style.display="flex";
+};
 
-    let existing = cart.find(c=>c.id==p.id);
-    let inStock = p.stock>0;
+window.nextStep=()=>{
 
-    grid.innerHTML+=`
-    <div class="card">
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let address=document.getElementById("address").value;
 
-      <img src="${p.image}">
+  if(!name || !phone || !address){
+    alert("Fill all details ❌");
+    return;
+  }
 
-      <div class="content">
-        <div>${p.name}</div>
-        <div>₹${p.price}</div>
+  document.getElementById("addressPopup").style.display="none";
+  document.getElementById("paymentPopup").style.display="flex";
+};
 
-        ${
-          !inStock
-          ? `<button class="btn" style="background:#444;color:#aaa">Out of Stock</button>`
-          : existing
-          ? `
-          <div style="display:flex;gap:10px;">
-            <button onclick="changeQty('${p.id}',-1)">-</button>
-            <span>${existing.qty}</span>
-            <button onclick="changeQty('${p.id}',1)">+</button>
-          </div>
-          `
-          : `<button class="btn" onclick="addToCart('${p.id}')">Add to Cart</button>`
-        }
+/* ================= SAVE ORDER ================= */
+async function saveOrder(method, paymentId="COD"){
 
-      </div>
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let address=document.getElementById("address").value;
 
-    </div>
-    `;
+  let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+  /* 🔥 SAVE FULL ORDER */
+  await addDoc(collection(db,"orders"),{
+    userId: user.id,
+    userName: user.name,
+    name,
+    phone,
+    address,
+    items: cart,
+    total,
+    paymentMethod: method,
+    paymentId: paymentId,
+    status:"Placed",
+    createdAt: new Date()
   });
 
+  /* 🔥 STOCK AUTO REDUCE */
+  const snap = await getDocs(collection(db,"products"));
+
+  for(const d of snap.docs){
+
+    let data = d.data();
+    let item = cart.find(x=>x.id==d.id);
+
+    if(item){
+
+      let newStock = (data.stock || 0) - item.qty;
+
+      await updateDoc(doc(db,"products",d.id),{
+        stock: newStock < 0 ? 0 : newStock
+      });
+
+    }
+  }
+
+  /* CLEAR CART */
+  localStorage.removeItem("cart");
+
+  /* SUCCESS */
+  location.href="success.html";
 }
 
-/* START */
-updateCart();
+/* ================= COD ================= */
+window.placeOrder = (method)=>{
+
+  if(method==="COD"){
+    saveOrder("COD");
+  }else{
+    startRazorpay();
+  }
+};
+
+/* ================= RAZORPAY ================= */
+function startRazorpay(){
+
+  let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+  let options = {
+    key: "rzp_live_SUAHUYpa5U0E9T",
+    amount: total * 100,
+    currency: "INR",
+    name: "ALKAIF",
+
+    handler: function (response){
+      saveOrder("ONLINE", response.razorpay_payment_id);
+    }
+  };
+
+  let rzp = new Razorpay(options);
+  rzp.open();
+}
+
+/* ================= START ================= */
 render();
 
 </script>
