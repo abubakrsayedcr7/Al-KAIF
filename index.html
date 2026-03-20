@@ -512,32 +512,192 @@ async function start(){
     }
 
     onSnapshot(collection(db,"products"), (snapshot)=>{
+<script type="module">
 
-      products = snapshot.docs.map(d=>{
-        let data=d.data();
-        return {
-          id:d.id,
-          name:data.name,
-          price:Number(data.price),
-          oldPrice:data.oldPrice ? Number(data.oldPrice) : null,
-          image:data.image,
-          stock:Number(data.stock)
-        };
-      });
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-      render();
-      updateCart();
-    });
+/* FIREBASE */
+const app = initializeApp({
+  apiKey:"AIzaSyBcvViENWxHC1b9j5V2xOFGMaL-2TYfdiw",
+  authDomain:"al-kaif-61446.firebaseapp.com",
+  projectId:"al-kaif-61446"
+});
+const db = getFirestore(app);
 
-  }catch(e){
-    console.log("Firebase error");
-  }
+/* GLOBAL */
+let products = [];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
+const grid = document.getElementById("grid");
+const cartCount = document.getElementById("cartCount");
+const floatCart = document.getElementById("floatCart");
+
+/* ================= FIXED FALLBACK ================= */
+const fallback = [
+{id:"1",name:"Puzzle Jubba",price:1999,image:"https://picsum.photos/id/1011/400/500",stock:10},
+{id:"2",name:"Cream Jubba",price:1999,image:"https://picsum.photos/id/1005/400/500",stock:5},
+{id:"3",name:"Golden Jubba",price:1999,image:"https://picsum.photos/id/1001/400/500",stock:0},
+{id:"4",name:"Royal Jubba",price:1999,image:"https://picsum.photos/id/1012/400/500",stock:7},
+{id:"5",name:"Grey Jubba",price:1999,image:"https://picsum.photos/id/1013/400/500",stock:6},
+{id:"6",name:"Black Jubba",price:1999,image:"https://picsum.photos/id/1015/400/500",stock:4}
+];
+
+/* ================= ALWAYS SHOW PRODUCTS ================= */
+products = fallback;
+
+/* ================= SAVE CART ================= */
+function saveCart(){
+  localStorage.setItem("cart", JSON.stringify(cart));
 }
 
-start();
+/* ================= UPDATE CART ================= */
+function updateCart(){
+  let count = cart.reduce((s,i)=>s+i.qty,0);
+  if(cartCount) cartCount.innerText = `Cart (${count})`;
+  if(floatCart) floatCart.innerText = `🛒 Cart (${count})`;
+}
+
+/* ================= LOGIN ================= */
+function checkLogin(){
+  if(!localStorage.getItem("user")){
+    location.href="login.html";
+    return false;
+  }
+  return true;
+}
+
+/* ================= ADD ================= */
+window.addToCart = (id)=>{
+
+  if(!checkLogin()) return;
+
+  let p = products.find(x=>x.id==id);
+
+  if(!p || p.stock<=0){
+    alert("Out of stock ❌");
+    return;
+  }
+
+  let ex = cart.find(x=>x.id==id);
+
+  if(ex) ex.qty++;
+  else cart.push({...p,qty:1});
+
+  saveCart();
+  updateCart();
+  render();
+};
+
+/* ================= QTY ================= */
+window.changeQty = (id,val)=>{
+  let item = cart.find(x=>x.id==id);
+  if(!item) return;
+
+  item.qty += val;
+
+  if(item.qty<=0){
+    cart = cart.filter(x=>x.id!=id);
+  }
+
+  saveCart();
+  updateCart();
+  render();
+};
+
+/* ================= RENDER ================= */
+function render(){
+
+  if(!grid){
+    console.log("GRID NOT FOUND ❌");
+    return;
+  }
+
+  grid.innerHTML = "";
+
+  products.forEach(p=>{
+
+    let exist = cart.find(c=>c.id==p.id);
+    let inStock = p.stock > 0;
+
+    grid.innerHTML += `
+    <div class="card">
+
+      <img src="${p.image}">
+
+      <div class="content">
+        <div class="title">${p.name}</div>
+
+        <div class="price">
+          <b>₹${p.price}</b>
+        </div>
+
+        ${
+          !inStock
+          ? `<button class="btn" style="background:#444;color:#aaa">Out of Stock</button>`
+          : exist
+          ? `
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button onclick="changeQty('${p.id}',-1)">-</button>
+            <span>${exist.qty}</span>
+            <button onclick="changeQty('${p.id}',1)">+</button>
+          </div>
+          `
+          : `<button onclick="addToCart('${p.id}')" class="btn">Add to Cart</button>`
+        }
+
+      </div>
+
+    </div>
+    `;
+  });
+}
+
+/* ================= START (IMPORTANT FIX) ================= */
+render();
+updateCart();
+
+/* ================= FIREBASE LOAD ================= */
+try{
+
+  const snap = await getDocs(collection(db,"products"));
+
+  if(!snap.empty){
+    products = snap.docs.map(d=>{
+      let data=d.data();
+      return {
+        id:d.id,
+        name:data.name,
+        price:Number(data.price),
+        image:data.image,
+        stock:Number(data.stock)
+      };
+    });
+
+    render();
+  }
+
+  onSnapshot(collection(db,"products"), (snapshot)=>{
+
+    products = snapshot.docs.map(d=>{
+      let data=d.data();
+      return {
+        id:d.id,
+        name:data.name,
+        price:Number(data.price),
+        image:data.image,
+        stock:Number(data.stock)
+      };
+    });
+
+    render();
+    updateCart();
+  });
+
+}catch(e){
+  console.log("Firebase failed → fallback active");
+}
 
 </script>
-
 </body>
 </html>
