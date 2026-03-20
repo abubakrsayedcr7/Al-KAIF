@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
+*{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:'Inter';
@@ -22,17 +24,61 @@ body{
   background:
     radial-gradient(circle at 20% 70%, #00ff8840, transparent 60%),
     radial-gradient(circle at 80% 20%, #00ffaa30, transparent 60%);
-  filter:blur(100px);
-  animation:move 10s infinite alternate;
+  filter:blur(120px);
+  animation:move 12s infinite alternate;
   z-index:-1;
 }
 
+/* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
   padding:20px;
 }
 
+.logo{
+  font-family:'Playfair Display';
+  font-size:24px;
+}
+
+.nav button{
+  background:#111;
+  border:1px solid #333;
+  padding:10px 15px;
+  border-radius:20px;
+  color:#fff;
+}
+
+/* HERO */
+.hero{
+  text-align:center;
+  padding:60px 20px;
+}
+
+.hero h1{
+  font-size:52px;
+  font-family:'Playfair Display';
+}
+
+.hero p{
+  opacity:0.7;
+}
+
+/* FEATURES */
+.features{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  flex-wrap:wrap;
+}
+
+.feature{
+  background:#111;
+  padding:10px 16px;
+  border-radius:20px;
+}
+
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -40,20 +86,34 @@ body{
   padding:20px;
 }
 
+/* CARD */
 .card{
-  background:#111;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(15px);
   border-radius:20px;
   overflow:hidden;
+  transition:0.3s;
 }
 
+.card:hover{
+  transform:translateY(-8px);
+}
+
+/* IMAGE */
 .card img{
   width:100%;
   height:220px;
   object-fit:cover;
 }
 
+/* CONTENT */
 .content{padding:15px}
 
+.title{font-size:18px}
+
+.price{opacity:0.8}
+
+/* BUTTON */
 .btn{
   width:100%;
   padding:10px;
@@ -62,7 +122,21 @@ body{
   border-radius:10px;
   background:#fff;
   color:#000;
+  font-weight:600;
 }
+
+/* FLOAT CART */
+.cart{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#fff;
+  color:#000;
+  padding:12px 20px;
+  border-radius:30px;
+  font-weight:600;
+}
+
 </style>
 </head>
 
@@ -71,25 +145,34 @@ body{
 <div class="bg"></div>
 
 <div class="header">
-  <h2>ALKAIF</h2>
-  <a href="cart.html" id="cartBtn">Cart (0)</a>
+  <div class="logo">ALKAIF</div>
+  <div class="nav">
+    <a href="orders.html"><button>Orders</button></a>
+    <button id="cartCount">Cart (0)</button>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>ALKAIF</h1>
+  <p>Elegance in Modesty • Premium Islamic Wear</p>
+</div>
+
+<div class="features">
+  <div class="feature">Premium Fabric</div>
+  <div class="feature">Modern Design</div>
+  <div class="feature">Comfort Fit</div>
 </div>
 
 <div class="grid" id="grid"></div>
 
+<a href="cart.html" class="cart" id="floatCart">🛒 Cart (0)</a>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  doc, 
-  updateDoc, 
-  getDocs 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 const app = initializeApp({
   apiKey:"AIzaSyBcvViENWxHC1b9j5V2xOFGMaL-2TYfdiw",
   authDomain:"al-kaif-61446.firebaseapp.com",
@@ -97,186 +180,161 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 
-/* ================= USER ================= */
-let user = JSON.parse(localStorage.getItem("user"));
+/* GLOBAL */
+let products=[];
+let cart=JSON.parse(localStorage.getItem("cart"))||[];
 
-/* guest auto create */
-if(!user){
-  user = {
-    id: "guest_" + Date.now(),
-    name: "Guest User"
-  };
-  localStorage.setItem("user", JSON.stringify(user));
+const grid=document.getElementById("grid");
+const cartCount=document.getElementById("cartCount");
+const floatCart=document.getElementById("floatCart");
+
+/* LOGIN */
+function checkLogin(){
+  if(!localStorage.getItem("user")){
+    location.href="login.html";
+    return false;
+  }
+  return true;
 }
 
-/* ================= CART ================= */
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+/* CART UI */
+function updateCart(){
+  let count=cart.reduce((s,i)=>s+i.qty,0);
+  cartCount.innerText=`Cart (${count})`;
+  floatCart.innerText=`🛒 Cart (${count})`;
+}
 
-const cartList = document.getElementById("cartList");
-const totalEl = document.getElementById("total");
+/* ADD */
+window.addToCart=(id)=>{
+  if(!checkLogin()) return;
 
-/* ================= RENDER ================= */
-function render(){
-
-  cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-  cartList.innerHTML="";
-  let total=0;
-
-  if(cart.length===0){
-    cartList.innerHTML="<p style='opacity:0.6'>Cart empty 🛒</p>";
-    totalEl.innerText="Total: ₹0";
+  let p=products.find(x=>x.id==id);
+  if(!p || p.stock<=0){
+    alert("Out of stock ❌");
     return;
   }
 
-  cart.forEach(p=>{
+  let ex=cart.find(x=>x.id==id);
 
-    total += p.price * p.qty;
+  if(ex) ex.qty++;
+  else cart.push({...p,qty:1});
 
-    cartList.innerHTML+=`
-    <div class="item">
+  localStorage.setItem("cart",JSON.stringify(cart));
+
+  updateCart();
+  render();
+};
+
+/* QTY */
+window.changeQty=(id,val)=>{
+  let item=cart.find(x=>x.id==id);
+  if(!item) return;
+
+  item.qty+=val;
+
+  if(item.qty<=0){
+    cart=cart.filter(x=>x.id!=id);
+  }
+
+  localStorage.setItem("cart",JSON.stringify(cart));
+
+  updateCart();
+  render();
+};
+
+/* RENDER */
+function render(){
+
+  grid.innerHTML="";
+
+  products.forEach(p=>{
+
+    let existing=cart.find(c=>c.id==p.id);
+    let inStock=p.stock>0;
+
+    grid.innerHTML+=`
+    <div class="card">
+
       <img src="${p.image}">
-      <div class="info">
-        <div>${p.name}</div>
-        <div>₹${p.price}</div>
 
-        <div class="qty">
-          <button onclick="changeQty('${p.id}',-1)">-</button>
-          <span>${p.qty}</span>
-          <button onclick="changeQty('${p.id}',1)">+</button>
+      <div class="content">
+        <div class="title">${p.name}</div>
+
+        <div class="price">
+          ${p.oldPrice ? `<span style="text-decoration:line-through;opacity:0.5">₹${p.oldPrice}</span>` : ""}
+          <b> ₹${p.price}</b>
         </div>
+
+        ${
+          !inStock
+          ? `<button class="btn" style="background:#444;color:#aaa">Out of Stock</button>`
+          : existing
+          ? `
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button onclick="changeQty('${p.id}',-1)">-</button>
+            <span>${existing.qty}</span>
+            <button onclick="changeQty('${p.id}',1)">+</button>
+          </div>
+          `
+          : `<button onclick="addToCart('${p.id}')" class="btn">Add to Cart</button>`
+        }
+
       </div>
+
     </div>
     `;
   });
 
-  totalEl.innerText = "Total: ₹"+total;
 }
 
-/* ================= QTY ================= */
-window.changeQty = (id,val)=>{
+/* LOAD */
+async function start(){
 
-  let item = cart.find(x=>x.id==id);
-  if(!item) return;
+  try{
 
-  item.qty += val;
+    const snap=await getDocs(collection(db,"products"));
 
-  if(item.qty<=0){
-    cart = cart.filter(x=>x.id!=id);
-  }
-
-  localStorage.setItem("cart",JSON.stringify(cart));
-  render();
-};
-
-/* ================= ADDRESS ================= */
-window.openAddress=()=>{
-
-  if(cart.length===0){
-    alert("Cart empty ❌");
-    return;
-  }
-
-  document.getElementById("addressPopup").style.display="flex";
-};
-
-window.nextStep=()=>{
-
-  let name=document.getElementById("name").value;
-  let phone=document.getElementById("phone").value;
-  let address=document.getElementById("address").value;
-
-  if(!name || !phone || !address){
-    alert("Fill all details ❌");
-    return;
-  }
-
-  document.getElementById("addressPopup").style.display="none";
-  document.getElementById("paymentPopup").style.display="flex";
-};
-
-/* ================= SAVE ORDER ================= */
-async function saveOrder(method, paymentId="COD"){
-
-  let name=document.getElementById("name").value;
-  let phone=document.getElementById("phone").value;
-  let address=document.getElementById("address").value;
-
-  let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
-
-  /* 🔥 SAVE FULL ORDER */
-  await addDoc(collection(db,"orders"),{
-    userId: user.id,
-    userName: user.name,
-    name,
-    phone,
-    address,
-    items: cart,
-    total,
-    paymentMethod: method,
-    paymentId: paymentId,
-    status:"Placed",
-    createdAt: new Date()
-  });
-
-  /* 🔥 STOCK AUTO REDUCE */
-  const snap = await getDocs(collection(db,"products"));
-
-  for(const d of snap.docs){
-
-    let data = d.data();
-    let item = cart.find(x=>x.id==d.id);
-
-    if(item){
-
-      let newStock = (data.stock || 0) - item.qty;
-
-      await updateDoc(doc(db,"products",d.id),{
-        stock: newStock < 0 ? 0 : newStock
+    if(!snap.empty){
+      products=snap.docs.map(d=>{
+        let data=d.data();
+        return {
+          id:d.id,
+          name:data.name,
+          price:Number(data.price),
+          oldPrice:data.oldPrice ? Number(data.oldPrice):null,
+          image:data.image,
+          stock:Number(data.stock)
+        };
       });
 
+      render();
     }
+
+    onSnapshot(collection(db,"products"), (snapshot)=>{
+      products=snapshot.docs.map(d=>{
+        let data=d.data();
+        return {
+          id:d.id,
+          name:data.name,
+          price:Number(data.price),
+          oldPrice:data.oldPrice ? Number(data.oldPrice):null,
+          image:data.image,
+          stock:Number(data.stock)
+        };
+      });
+
+      render();
+      updateCart();
+    });
+
+  }catch(e){
+    console.log("Firebase error");
   }
 
-  /* CLEAR CART */
-  localStorage.removeItem("cart");
-
-  /* SUCCESS */
-  location.href="success.html";
 }
 
-/* ================= COD ================= */
-window.placeOrder = (method)=>{
-
-  if(method==="COD"){
-    saveOrder("COD");
-  }else{
-    startRazorpay();
-  }
-};
-
-/* ================= RAZORPAY ================= */
-function startRazorpay(){
-
-  let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
-
-  let options = {
-    key: "rzp_live_SUAHUYpa5U0E9T",
-    amount: total * 100,
-    currency: "INR",
-    name: "ALKAIF",
-
-    handler: function (response){
-      saveOrder("ONLINE", response.razorpay_payment_id);
-    }
-  };
-
-  let rzp = new Razorpay(options);
-  rzp.open();
-}
-
-/* ================= START ================= */
-render();
+updateCart();
+start();
 
 </script>
 
