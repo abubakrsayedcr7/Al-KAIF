@@ -16,7 +16,7 @@ body{
   color:#fff;
 }
 
-/* BG */
+/* BACKGROUND */
 .bg{
   position:fixed;
   width:200%;
@@ -28,6 +28,10 @@ body{
   animation:move 12s infinite alternate;
   z-index:-1;
 }
+@keyframes move{
+  0%{transform:translate(0,0)}
+  100%{transform:translate(-120px,80px)}
+}
 
 /* HEADER */
 .header{
@@ -35,16 +39,14 @@ body{
   justify-content:space-between;
   padding:20px;
 }
-
 .logo{
   font-family:'Playfair Display';
-  font-size:24px;
+  font-size:26px;
 }
-
 .nav button{
   background:#111;
   border:1px solid #333;
-  padding:10px 15px;
+  padding:10px 16px;
   border-radius:20px;
   color:#fff;
 }
@@ -54,12 +56,10 @@ body{
   text-align:center;
   padding:60px 20px;
 }
-
 .hero h1{
   font-size:52px;
   font-family:'Playfair Display';
 }
-
 .hero p{
   opacity:0.7;
 }
@@ -71,7 +71,6 @@ body{
   gap:15px;
   flex-wrap:wrap;
 }
-
 .feature{
   background:#111;
   padding:10px 16px;
@@ -83,7 +82,7 @@ body{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
   gap:20px;
-  padding:20px;
+  padding:30px 20px;
 }
 
 /* CARD */
@@ -92,11 +91,11 @@ body{
   backdrop-filter:blur(15px);
   border-radius:20px;
   overflow:hidden;
-  transition:0.3s;
+  transition:0.4s;
+  animation:fadeUp 0.5s ease;
 }
-
 .card:hover{
-  transform:translateY(-8px);
+  transform:translateY(-8px) scale(1.02);
 }
 
 /* IMAGE */
@@ -108,9 +107,7 @@ body{
 
 /* CONTENT */
 .content{padding:15px}
-
 .title{font-size:18px}
-
 .price{opacity:0.8}
 
 /* BUTTON */
@@ -125,6 +122,21 @@ body{
   font-weight:600;
 }
 
+/* ABOUT */
+.about{
+  padding:60px 20px;
+  text-align:center;
+}
+.about h2{
+  font-family:'Playfair Display';
+  font-size:32px;
+}
+.about p{
+  opacity:0.7;
+  max-width:700px;
+  margin:auto;
+}
+
 /* FLOAT CART */
 .cart{
   position:fixed;
@@ -137,6 +149,11 @@ body{
   font-weight:600;
 }
 
+/* ANIMATION */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
 </style>
 </head>
 
@@ -144,6 +161,7 @@ body{
 
 <div class="bg"></div>
 
+<!-- HEADER -->
 <div class="header">
   <div class="logo">ALKAIF</div>
   <div class="nav">
@@ -152,19 +170,32 @@ body{
   </div>
 </div>
 
+<!-- HERO -->
 <div class="hero">
   <h1>ALKAIF</h1>
   <p>Elegance in Modesty • Premium Islamic Wear</p>
 </div>
 
+<!-- FEATURES -->
 <div class="features">
   <div class="feature">Premium Fabric</div>
   <div class="feature">Modern Design</div>
   <div class="feature">Comfort Fit</div>
 </div>
 
+<!-- PRODUCTS -->
 <div class="grid" id="grid"></div>
 
+<!-- ABOUT -->
+<div class="about">
+  <h2>About ALKAIF</h2>
+  <p>
+    ALKAIF is a premium modest wear brand focused on elegance and simplicity.
+    Our collection combines modern tailoring with timeless Islamic values.
+  </p>
+</div>
+
+<!-- FLOAT CART -->
 <a href="cart.html" class="cart" id="floatCart">🛒 Cart (0)</a>
 
 <script type="module">
@@ -188,6 +219,16 @@ const grid=document.getElementById("grid");
 const cartCount=document.getElementById("cartCount");
 const floatCart=document.getElementById("floatCart");
 
+/* FALLBACK (IMPORTANT FIX) */
+const fallback=[
+{id:"1",name:"Puzzle Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1011/400/500",stock:10},
+{id:"2",name:"Cream Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1005/400/500",stock:5},
+{id:"3",name:"Golden Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1001/400/500",stock:0},
+{id:"4",name:"Royal Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1012/400/500",stock:7},
+{id:"5",name:"Grey Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1013/400/500",stock:6},
+{id:"6",name:"Black Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1015/400/500",stock:4}
+];
+
 /* LOGIN */
 function checkLogin(){
   if(!localStorage.getItem("user")){
@@ -209,6 +250,7 @@ window.addToCart=(id)=>{
   if(!checkLogin()) return;
 
   let p=products.find(x=>x.id==id);
+
   if(!p || p.stock<=0){
     alert("Out of stock ❌");
     return;
@@ -290,8 +332,12 @@ function render(){
 /* LOAD */
 async function start(){
 
-  try{
+  /* FIRST SHOW (FIX) */
+  products=fallback;
+  render();
+  updateCart();
 
+  try{
     const snap=await getDocs(collection(db,"products"));
 
     if(!snap.empty){
@@ -328,12 +374,11 @@ async function start(){
     });
 
   }catch(e){
-    console.log("Firebase error");
+    console.log("Firebase error → fallback running");
   }
 
 }
 
-updateCart();
 start();
 
 </script>
