@@ -8,19 +8,12 @@
 
 <style>
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:'Inter';
-  background:#020705;
-  color:#fff;
-}
+body{margin:0;font-family:'Inter';background:#020705;color:#fff}
 
 /* BACKGROUND */
 .bg{
   position:fixed;
-  width:200%;
-  height:200%;
+  width:200%;height:200%;
   background:
     radial-gradient(circle at 20% 70%, #00ff8840, transparent 60%),
     radial-gradient(circle at 80% 20%, #00ffaa30, transparent 60%);
@@ -34,55 +27,27 @@ body{
 }
 
 /* HEADER */
-.header{
-  display:flex;
-  justify-content:space-between;
-  padding:20px;
-}
-.logo{
-  font-family:'Playfair Display';
-  font-size:26px;
-}
+.header{display:flex;justify-content:space-between;padding:20px}
+.logo{font-family:'Playfair Display';font-size:26px}
 .nav button{
-  background:#111;
-  border:1px solid #333;
-  padding:10px 16px;
-  border-radius:20px;
-  color:#fff;
+  background:#111;border:1px solid #333;
+  padding:10px 16px;border-radius:20px;color:#fff;
 }
 
 /* HERO */
-.hero{
-  text-align:center;
-  padding:60px 20px;
-}
-.hero h1{
-  font-size:52px;
-  font-family:'Playfair Display';
-}
-.hero p{
-  opacity:0.7;
-}
+.hero{text-align:center;padding:60px 20px}
+.hero h1{font-size:52px;font-family:'Playfair Display'}
+.hero p{opacity:0.7}
 
 /* FEATURES */
-.features{
-  display:flex;
-  justify-content:center;
-  gap:15px;
-  flex-wrap:wrap;
-}
-.feature{
-  background:#111;
-  padding:10px 16px;
-  border-radius:20px;
-}
+.features{display:flex;justify-content:center;gap:15px;flex-wrap:wrap}
+.feature{background:#111;padding:10px 16px;border-radius:20px}
 
 /* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:20px;
-  padding:30px 20px;
+  gap:20px;padding:30px 20px;
 }
 
 /* CARD */
@@ -92,18 +57,11 @@ body{
   border-radius:20px;
   overflow:hidden;
   transition:0.4s;
-  animation:fadeUp 0.5s ease;
 }
-.card:hover{
-  transform:translateY(-8px) scale(1.02);
-}
+.card:hover{transform:translateY(-8px) scale(1.02)}
 
 /* IMAGE */
-.card img{
-  width:100%;
-  height:220px;
-  object-fit:cover;
-}
+.card img{width:100%;height:220px;object-fit:cover}
 
 /* CONTENT */
 .content{padding:15px}
@@ -112,47 +70,21 @@ body{
 
 /* BUTTON */
 .btn{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border:none;
-  border-radius:10px;
-  background:#fff;
-  color:#000;
-  font-weight:600;
+  width:100%;padding:10px;margin-top:10px;
+  border:none;border-radius:10px;
+  background:#fff;color:#000;font-weight:600;
 }
 
 /* ABOUT */
-.about{
-  padding:60px 20px;
-  text-align:center;
-}
-.about h2{
-  font-family:'Playfair Display';
-  font-size:32px;
-}
-.about p{
-  opacity:0.7;
-  max-width:700px;
-  margin:auto;
-}
+.about{text-align:center;padding:60px 20px}
+.about h2{font-family:'Playfair Display';font-size:32px}
 
 /* FLOAT CART */
 .cart{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:#fff;
-  color:#000;
-  padding:12px 20px;
-  border-radius:30px;
+  position:fixed;bottom:20px;right:20px;
+  background:#fff;color:#000;
+  padding:12px 20px;border-radius:30px;
   font-weight:600;
-}
-
-/* ANIMATION */
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
 }
 </style>
 </head>
@@ -161,7 +93,6 @@ body{
 
 <div class="bg"></div>
 
-<!-- HEADER -->
 <div class="header">
   <div class="logo">ALKAIF</div>
   <div class="nav">
@@ -170,32 +101,24 @@ body{
   </div>
 </div>
 
-<!-- HERO -->
 <div class="hero">
   <h1>ALKAIF</h1>
   <p>Elegance in Modesty • Premium Islamic Wear</p>
 </div>
 
-<!-- FEATURES -->
 <div class="features">
   <div class="feature">Premium Fabric</div>
   <div class="feature">Modern Design</div>
   <div class="feature">Comfort Fit</div>
 </div>
 
-<!-- PRODUCTS -->
 <div class="grid" id="grid"></div>
 
-<!-- ABOUT -->
 <div class="about">
   <h2>About ALKAIF</h2>
-  <p>
-    ALKAIF is a premium modest wear brand focused on elegance and simplicity.
-    Our collection combines modern tailoring with timeless Islamic values.
-  </p>
+  <p>Premium Islamic wear with elegance and simplicity.</p>
 </div>
 
-<!-- FLOAT CART -->
 <a href="cart.html" class="cart" id="floatCart">🛒 Cart (0)</a>
 
 <script type="module">
@@ -212,14 +135,15 @@ const app = initializeApp({
 const db = getFirestore(app);
 
 /* GLOBAL */
-let products=[];
-let cart=JSON.parse(localStorage.getItem("cart"))||[];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let products = [];
 
+/* ELEMENTS */
 const grid=document.getElementById("grid");
 const cartCount=document.getElementById("cartCount");
 const floatCart=document.getElementById("floatCart");
 
-/* FALLBACK (IMPORTANT FIX) */
+/* FALLBACK */
 const fallback=[
 {id:"1",name:"Puzzle Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1011/400/500",stock:10},
 {id:"2",name:"Cream Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1005/400/500",stock:5},
@@ -228,6 +152,16 @@ const fallback=[
 {id:"5",name:"Grey Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1013/400/500",stock:6},
 {id:"6",name:"Black Jubba",price:1999,oldPrice:3300,image:"https://picsum.photos/id/1015/400/500",stock:4}
 ];
+
+/* CART */
+function saveCart(){
+  localStorage.setItem("cart",JSON.stringify(cart));
+}
+function updateCart(){
+  let count=cart.reduce((s,i)=>s+i.qty,0);
+  cartCount.innerText=`Cart (${count})`;
+  floatCart.innerText=`🛒 Cart (${count})`;
+}
 
 /* LOGIN */
 function checkLogin(){
@@ -238,31 +172,21 @@ function checkLogin(){
   return true;
 }
 
-/* CART UI */
-function updateCart(){
-  let count=cart.reduce((s,i)=>s+i.qty,0);
-  cartCount.innerText=`Cart (${count})`;
-  floatCart.innerText=`🛒 Cart (${count})`;
-}
-
 /* ADD */
 window.addToCart=(id)=>{
   if(!checkLogin()) return;
 
   let p=products.find(x=>x.id==id);
-
   if(!p || p.stock<=0){
     alert("Out of stock ❌");
     return;
   }
 
   let ex=cart.find(x=>x.id==id);
-
   if(ex) ex.qty++;
   else cart.push({...p,qty:1});
 
-  localStorage.setItem("cart",JSON.stringify(cart));
-
+  saveCart();
   updateCart();
   render();
 };
@@ -273,236 +197,69 @@ window.changeQty=(id,val)=>{
   if(!item) return;
 
   item.qty+=val;
+  if(item.qty<=0) cart=cart.filter(x=>x.id!=id);
 
-  if(item.qty<=0){
-    cart=cart.filter(x=>x.id!=id);
-  }
-
-  localStorage.setItem("cart",JSON.stringify(cart));
-
+  saveCart();
   updateCart();
   render();
 };
 
 /* RENDER */
 function render(){
-
   grid.innerHTML="";
 
   products.forEach(p=>{
-
-    let existing=cart.find(c=>c.id==p.id);
+    let ex=cart.find(c=>c.id==p.id);
     let inStock=p.stock>0;
 
     grid.innerHTML+=`
     <div class="card">
-
       <img src="${p.image}">
-
       <div class="content">
         <div class="title">${p.name}</div>
 
         <div class="price">
-          ${p.oldPrice ? `<span style="text-decoration:line-through;opacity:0.5">₹${p.oldPrice}</span>` : ""}
+          ${p.oldPrice?`<span style="text-decoration:line-through;opacity:0.5">₹${p.oldPrice}</span>`:""}
           <b> ₹${p.price}</b>
         </div>
 
         ${
           !inStock
           ? `<button class="btn" style="background:#444;color:#aaa">Out of Stock</button>`
-          : existing
+          : ex
           ? `
           <div style="display:flex;gap:10px;margin-top:10px;">
             <button onclick="changeQty('${p.id}',-1)">-</button>
-            <span>${existing.qty}</span>
+            <span>${ex.qty}</span>
             <button onclick="changeQty('${p.id}',1)">+</button>
-          </div>
-          `
+          </div>`
           : `<button onclick="addToCart('${p.id}')" class="btn">Add to Cart</button>`
         }
-
       </div>
-
-    </div>
-    `;
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* FIREBASE */
-const app = initializeApp({
-  apiKey:"AIzaSyBcvViENWxHC1b9j5V2xOFGMaL-2TYfdiw",
-  authDomain:"al-kaif-61446.firebaseapp.com",
-  projectId:"al-kaif-61446"
-});
-const db = getFirestore(app);
-
-/* GLOBAL */
-let products = [];
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-/* ELEMENTS */
-const grid = document.getElementById("grid");
-const cartCount = document.getElementById("cartCount");
-const floatCart = document.getElementById("floatCart");
-
-/* ================= CART FIX ================= */
-
-/* ALWAYS SAVE */
-function saveCart(){
-  localStorage.setItem("cart", JSON.stringify(cart));
-}
-
-/* UPDATE UI */
-function updateCart(){
-  let count = cart.reduce((s,i)=>s+i.qty,0);
-  cartCount.innerText = `Cart (${count})`;
-  floatCart.innerText = `🛒 Cart (${count})`;
-}
-
-/* LOGIN */
-function checkLogin(){
-  if(!localStorage.getItem("user")){
-    location.href="login.html";
-    return false;
-  }
-  return true;
-}
-
-/* ================= ADD FIX ================= */
-window.addToCart = (id)=>{
-
-  console.log("ADD CLICK", id);
-
-  if(!checkLogin()) return;
-
-  let product = products.find(p=>p.id == id);
-
-  if(!product){
-    alert("Product not found ❌");
-    return;
-  }
-
-  if(product.stock <= 0){
-    alert("Out of stock ❌");
-    return;
-  }
-
-  let exist = cart.find(c=>c.id == id);
-
-  if(exist){
-    exist.qty += 1;
-  }else{
-    cart.push({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      image: product.image,
-      qty: 1
-    });
-  }
-
-  saveCart();
-  updateCart();
-  render();
-
-  alert("Added to cart ✅");
-};
-
-/* ================= QTY ================= */
-window.changeQty = (id,val)=>{
-
-  let item = cart.find(x=>x.id==id);
-  if(!item) return;
-
-  item.qty += val;
-
-  if(item.qty <= 0){
-    cart = cart.filter(x=>x.id!=id);
-  }
-
-  saveCart();
-  updateCart();
-  render();
-};
-
-/* ================= RENDER ================= */
-function render(){
-
-  if(!grid) return;
-
-  grid.innerHTML="";
-
-  products.forEach(p=>{
-
-    let exist = cart.find(c=>c.id==p.id);
-    let inStock = p.stock > 0;
-
-    grid.innerHTML += `
-    <div class="card">
-
-      <img src="${p.image}">
-
-      <div class="content">
-        <div class="title">${p.name}</div>
-
-        <div class="price">
-          ${p.oldPrice ? `<span style="text-decoration:line-through;opacity:0.5">₹${p.oldPrice}</span>` : ""}
-          <b> ₹${p.price}</b>
-        </div>
-
-        ${
-          !inStock
-          ? `<button class="btn" style="background:#444;color:#aaa">Out of Stock</button>`
-          : exist
-          ? `
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <button onclick="changeQty('${p.id}',-1)">-</button>
-            <span>${exist.qty}</span>
-            <button onclick="changeQty('${p.id}',1)">+</button>
-          </div>
-          `
-          : `<button onclick="addToCart('${p.id}')" class="btn">Add to Cart</button>`
-        }
-
-      </div>
-
     </div>
     `;
   });
 }
 
-/* ================= FALLBACK ================= */
-const fallback = [
-{id:"1",name:"Puzzle Jubba",price:1999,image:"https://picsum.photos/id/1011/400/500",stock:10},
-{id:"2",name:"Cream Jubba",price:1999,image:"https://picsum.photos/id/1005/400/500",stock:5},
-{id:"3",name:"Golden Jubba",price:1999,image:"https://picsum.photos/id/1001/400/500",stock:0},
-{id:"4",name:"Royal Jubba",price:1999,image:"https://picsum.photos/id/1012/400/500",stock:7},
-{id:"5",name:"Grey Jubba",price:1999,image:"https://picsum.photos/id/1013/400/500",stock:6},
-{id:"6",name:"Black Jubba",price:1999,image:"https://picsum.photos/id/1015/400/500",stock:4}
-];
-
-/* ================= LOAD ================= */
+/* START */
 async function start(){
 
-  /* IMPORTANT FIX */
-  products = fallback;
+  /* ALWAYS SHOW */
+  products=fallback;
   render();
   updateCart();
 
   try{
-
-    const snap = await getDocs(collection(db,"products"));
+    const snap=await getDocs(collection(db,"products"));
 
     if(!snap.empty){
-      products = snap.docs.map(d=>{
-        let data = d.data();
+      products=snap.docs.map(d=>{
+        let data=d.data();
         return {
           id:d.id,
           name:data.name,
           price:Number(data.price),
-          oldPrice:data.oldPrice ? Number(data.oldPrice) : null,
+          oldPrice:data.oldPrice?Number(data.oldPrice):null,
           image:data.image,
           stock:Number(data.stock)
         };
@@ -511,193 +268,32 @@ async function start(){
       render();
     }
 
-    onSnapshot(collection(db,"products"), (snapshot)=>{
-<script type="module">
+    onSnapshot(collection(db,"products"),(snapshot)=>{
+      products=snapshot.docs.map(d=>{
+        let data=d.data();
+        return {
+          id:d.id,
+          name:data.name,
+          price:Number(data.price),
+          oldPrice:data.oldPrice?Number(data.oldPrice):null,
+          image:data.image,
+          stock:Number(data.stock)
+        };
+      });
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* FIREBASE */
-const app = initializeApp({
-  apiKey:"AIzaSyBcvViENWxHC1b9j5V2xOFGMaL-2TYfdiw",
-  authDomain:"al-kaif-61446.firebaseapp.com",
-  projectId:"al-kaif-61446"
-});
-const db = getFirestore(app);
-
-/* GLOBAL */
-let products = [];
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-const grid = document.getElementById("grid");
-const cartCount = document.getElementById("cartCount");
-const floatCart = document.getElementById("floatCart");
-
-/* ================= FIXED FALLBACK ================= */
-const fallback = [
-{id:"1",name:"Puzzle Jubba",price:1999,image:"https://picsum.photos/id/1011/400/500",stock:10},
-{id:"2",name:"Cream Jubba",price:1999,image:"https://picsum.photos/id/1005/400/500",stock:5},
-{id:"3",name:"Golden Jubba",price:1999,image:"https://picsum.photos/id/1001/400/500",stock:0},
-{id:"4",name:"Royal Jubba",price:1999,image:"https://picsum.photos/id/1012/400/500",stock:7},
-{id:"5",name:"Grey Jubba",price:1999,image:"https://picsum.photos/id/1013/400/500",stock:6},
-{id:"6",name:"Black Jubba",price:1999,image:"https://picsum.photos/id/1015/400/500",stock:4}
-];
-
-/* ================= ALWAYS SHOW PRODUCTS ================= */
-products = fallback;
-
-/* ================= SAVE CART ================= */
-function saveCart(){
-  localStorage.setItem("cart", JSON.stringify(cart));
-}
-
-/* ================= UPDATE CART ================= */
-function updateCart(){
-  let count = cart.reduce((s,i)=>s+i.qty,0);
-  if(cartCount) cartCount.innerText = `Cart (${count})`;
-  if(floatCart) floatCart.innerText = `🛒 Cart (${count})`;
-}
-
-/* ================= LOGIN ================= */
-function checkLogin(){
-  if(!localStorage.getItem("user")){
-    location.href="login.html";
-    return false;
-  }
-  return true;
-}
-
-/* ================= ADD ================= */
-window.addToCart = (id)=>{
-
-  if(!checkLogin()) return;
-
-  let p = products.find(x=>x.id==id);
-
-  if(!p || p.stock<=0){
-    alert("Out of stock ❌");
-    return;
-  }
-
-  let ex = cart.find(x=>x.id==id);
-
-  if(ex) ex.qty++;
-  else cart.push({...p,qty:1});
-
-  saveCart();
-  updateCart();
-  render();
-};
-
-/* ================= QTY ================= */
-window.changeQty = (id,val)=>{
-  let item = cart.find(x=>x.id==id);
-  if(!item) return;
-
-  item.qty += val;
-
-  if(item.qty<=0){
-    cart = cart.filter(x=>x.id!=id);
-  }
-
-  saveCart();
-  updateCart();
-  render();
-};
-
-/* ================= RENDER ================= */
-function render(){
-
-  if(!grid){
-    console.log("GRID NOT FOUND ❌");
-    return;
-  }
-
-  grid.innerHTML = "";
-
-  products.forEach(p=>{
-
-    let exist = cart.find(c=>c.id==p.id);
-    let inStock = p.stock > 0;
-
-    grid.innerHTML += `
-    <div class="card">
-
-      <img src="${p.image}">
-
-      <div class="content">
-        <div class="title">${p.name}</div>
-
-        <div class="price">
-          <b>₹${p.price}</b>
-        </div>
-
-        ${
-          !inStock
-          ? `<button class="btn" style="background:#444;color:#aaa">Out of Stock</button>`
-          : exist
-          ? `
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <button onclick="changeQty('${p.id}',-1)">-</button>
-            <span>${exist.qty}</span>
-            <button onclick="changeQty('${p.id}',1)">+</button>
-          </div>
-          `
-          : `<button onclick="addToCart('${p.id}')" class="btn">Add to Cart</button>`
-        }
-
-      </div>
-
-    </div>
-    `;
-  });
-}
-
-/* ================= START (IMPORTANT FIX) ================= */
-render();
-updateCart();
-
-/* ================= FIREBASE LOAD ================= */
-try{
-
-  const snap = await getDocs(collection(db,"products"));
-
-  if(!snap.empty){
-    products = snap.docs.map(d=>{
-      let data=d.data();
-      return {
-        id:d.id,
-        name:data.name,
-        price:Number(data.price),
-        image:data.image,
-        stock:Number(data.stock)
-      };
+      render();
+      updateCart();
     });
 
-    render();
+  }catch(e){
+    console.log("Firebase error → fallback active");
   }
 
-  onSnapshot(collection(db,"products"), (snapshot)=>{
-
-    products = snapshot.docs.map(d=>{
-      let data=d.data();
-      return {
-        id:d.id,
-        name:data.name,
-        price:Number(data.price),
-        image:data.image,
-        stock:Number(data.stock)
-      };
-    });
-
-    render();
-    updateCart();
-  });
-
-}catch(e){
-  console.log("Firebase failed → fallback active");
 }
+
+start();
 
 </script>
+
 </body>
 </html>
